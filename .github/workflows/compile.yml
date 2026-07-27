@@ -1,0 +1,38 @@
+name: Compilar CloakV4 Linux
+
+on:
+  push:
+    branches: [ "main", "master", "*" ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar Repositorio
+        uses: actions/checkout@v4
+
+      - name: Actualizar Herramientas de Python (Fix setuptools_scm)
+        run: |
+          python3 -m pip install --upgrade pip setuptools setuptools_scm wheel
+
+      - name: Instalar Dependencias del Motor Luanti
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libirrlicht-dev libsqlite3-dev libluajit-5.1-dev libcurl4-gnutls-dev libgl1-mesa-dev libglew-dev
+
+      - name: Configurar CMake
+        run: |
+          mkdir build
+          cd build
+          cmake -DBUILD_CLIENT=TRUE -DBUILD_SERVER=FALSE ..
+
+      - name: Compilar con Todos los Núcleos de la Nube
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Guardar Binario Compilado (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloakv4-linux-binary
+          path: build/bin/
